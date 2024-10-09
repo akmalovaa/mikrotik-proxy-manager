@@ -1,10 +1,16 @@
 # mikrotik-proxy-manager
 
-Built-in router, simple reverse proxy
-
 > **status:** in development
 
+Built-in router, simple reverse proxy
+Managing proxy hosts with winbox
+
 Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Container)
+
+**For the service to work, you need:**
+- RouterOS with enabled container feature (arm, arm64, x86)
+- Public ip address
+- Domain name
 
 ### Goal
 
