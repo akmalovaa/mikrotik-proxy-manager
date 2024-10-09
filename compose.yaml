@@ -1,0 +1,48 @@
+services:
+  mikrotik-proxy-manager:
+    image: mikrotik-proxy-manager:0.1.0
+    container_name: mikrotik-proxy-manager
+    restart: unless-stopped
+    command: ["python", "-m", "mikrotik-proxy-manager"]
+    volumes:
+      - ./logs:/srv/logs
+  
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik
+    restart: unless-stopped
+    environment:
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+    ports:
+      - "443:443"
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./traefik/config:/etc/traefik/dynamic"
+      - "./traefik/acme.json:/acme.json"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik-secure.tls=true"
+      # - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare"
+      # - "traefik.http.routers.traefik-secure.tls.domains[0].main=akmalov.com"
+      # - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.akmalov.com"
+
+  # whoami:
+  #   image: "traefik/whoami"
+  #   container_name: "simple-service"
+  #   labels:
+  #     - "traefik.enable=true"
+  #     - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
+  #     - "traefik.http.routers.whoami.entrypoints=websecure"
+  #     - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+
+# no space to extract layer
+# /container/mounts/add name=traefik_static src=usb1/traefik/traefik.yml dst=/etc/traefik/traefik.yml
+
+# /container/add remote-image=traefik:v3.2 interface=veth1 root-dir=usb1/traefik mounts=traefik_static logging=yes
+
+
+# /container/add remote-image=traefik:v3.2 interface=veth1 root-dir=usb1/docker/traefik logging=yes cmd="tail -f /dev/null"
+
+# /container/add remote-image=nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes

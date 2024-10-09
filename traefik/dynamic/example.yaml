@@ -1,0 +1,14 @@
+http:
+  routers:
+    example-router:
+      entryPoints:
+        - websecure
+      rule: "Host(`test.example.com`)"
+      service: example-service
+      tls:
+        certResolver: letsEncrypt
+  services:
+    example-service:
+      loadBalancer:
+        servers:
+          - url: http://10.0.0.1:3000
