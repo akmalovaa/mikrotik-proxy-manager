@@ -9,6 +9,9 @@ packages = [{include = "mikrotik_proxy_manager"}]
 [tool.poetry.dependencies]
 python = "^3.11"
 watchdog = "^5.0.3"
+pyyaml = "^6.0.2"
+pydantic-settings = "^2.5.2"
+loguru = "^0.7.2"
 
 
 [build-system]

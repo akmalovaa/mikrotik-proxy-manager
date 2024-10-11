@@ -14,6 +14,5 @@ coverage.xml
 pytest.xml
 .python-version
 .venv
-data.ms/
-dumps/
 temp
+logs.0.txt

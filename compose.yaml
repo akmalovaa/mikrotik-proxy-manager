@@ -4,6 +4,9 @@ services:
     container_name: mikrotik-proxy-manager
     restart: unless-stopped
     command: ["python", "-m", "mikrotik-proxy-manager"]
+    environment:
+      LOG_LEVEL: "INFO"
+      MIKROTIK_LOG_FILE: "logs.0.txt"
     volumes:
       - ./logs:/srv/logs
   
@@ -36,13 +39,3 @@ services:
   #     - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
   #     - "traefik.http.routers.whoami.entrypoints=websecure"
   #     - "traefik.http.routers.whoami.tls.certresolver=myresolver"
-
-# no space to extract layer
-# /container/mounts/add name=traefik_static src=usb1/traefik/traefik.yml dst=/etc/traefik/traefik.yml
-
-# /container/add remote-image=traefik:v3.2 interface=veth1 root-dir=usb1/traefik mounts=traefik_static logging=yes
-
-
-# /container/add remote-image=traefik:v3.2 interface=veth1 root-dir=usb1/docker/traefik logging=yes cmd="tail -f /dev/null"
-
-# /container/add remote-image=nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes

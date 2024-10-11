@@ -27,3 +27,41 @@ Containers:
 ```
 python -m mikrotik-proxy-manager
 ```
+
+- registry-1.docker.io
+- ghcr.io 
+
+no space to extract layer -> need root-dir
+
+example commands:
+```shell
+# mount test
+/container/mounts/add name=traefik_static src=usb1/traefik/traefik.yml dst=/etc/traefik/traefik.yml
+
+# NGINX
+/container/add remote-image=nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes
+
+
+/container/add remote-image=traefik:v3.2 interface=veth1 root-dir=usb1/traefik mounts=traefik_static logging=yes
+
+# python iamge for run and shell exec
+/container/add remote-image=python:3.12.7-slim interface=veth1 root-dir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
+
+# test
+/container/add remote-image=akmalovaa/mikrotik-proxy-manager:1.0.0 interface=veth1 root-dir=usb1/mpm logging=yes start-on-boot=yes hostname=mpm dns=1.1.1.1
+```
+
+
+build arm64
+```yaml
+   - name: Build and push
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        sbom: false
+        provenance: false
+        platforms: linux/arm64,linux/arm/v7
+```
+
+https://forum.mikrotik.com/viewtopic.php?t=193727
