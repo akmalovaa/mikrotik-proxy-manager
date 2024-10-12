@@ -4,15 +4,14 @@ WORKDIR /srv/
 COPY pyproject.toml .
 COPY poetry.lock .
 
-RUN apt update
-RUN apt install -y gcc cmake make libc-dev-bin libc6-dev && pip install --upgrade pip
-RUN pip install poetry
+RUN apt-get update && apt-get install -y --no-install-recommends g++ gcc git libcairo2-dev \
+    pkg-config python3-dev
+RUN pip install -U pip && pip install poetry
 
 RUN poetry config virtualenvs.create false
-RUN poetry install
+RUN poetry install --no-interaction
 
-RUN apt-get remove -y gcc cmake make libc-dev-bin libc6-dev
-RUN rm -rf /var/lib/apt/lists/* && apt-get autoremove -y && apt-get clean
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* && apt-get autoremove -y
 RUN pip uninstall pipenv poetry -y
 
 COPY . .
