@@ -1,0 +1,16 @@
+Dockerfile
+.git/
+.github
+.vs*/
+dist/
+__py*/
+log*/
+hfpy.*/
+*.tgz
+compose.yaml
+*.txt
+.gitignore
+readme.md
+**/__pycache__
+**/*.pyc
+.toml
