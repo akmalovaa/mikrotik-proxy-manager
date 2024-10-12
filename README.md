@@ -18,6 +18,8 @@ Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Contain
 - Public ip address
 - Domain name
 
+> An easier way to use a reverse proxy server without a public IP [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) (Only for cloudflare DNS provider)
+
 ## Guide
 
 ### Prepare
