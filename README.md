@@ -8,7 +8,7 @@ Managing proxy hosts with winbox
 Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Container)
 
 **For the service to work, you need:**
-- RouterOS with enabled container feature (arm, arm64, x86)
+- RouterOS with enabled container feature (arm64, x86)
 - Public ip address
 - Domain name
 
@@ -50,18 +50,3 @@ example commands:
 # test
 /container/add remote-image=akmalovaa/mikrotik-proxy-manager:1.0.0 interface=veth1 root-dir=usb1/mpm logging=yes start-on-boot=yes hostname=mpm dns=1.1.1.1
 ```
-
-
-build arm64
-```yaml
-   - name: Build and push
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        push: true
-        sbom: false
-        provenance: false
-        platforms: linux/arm64,linux/arm/v7
-```
-
-https://forum.mikrotik.com/viewtopic.php?t=193727
