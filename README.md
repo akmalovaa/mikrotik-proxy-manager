@@ -103,6 +103,16 @@ add name=mpm_config src=/usb1/configs dst=/srv/configs
 /container/add remote-image=akmalovaa/mikrotik-proxy-manager interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_logs,mpm_config logging=yes start-on-boot=yes
 ```
 
+Run containers 
+
+Use winbox `/ip/proxy/access` for create proxy config
+
+At the current time, it works very simply, parse only:
+- HOST
+- DST-IP
+- DST-PORT
+
+
 ### Dev 
 
 python
@@ -136,3 +146,5 @@ example commands:
 
 TO DO:
 - fix build armv7 github action
+- mb add authelia authentication and authorization server
+- mb add crowdsec AppSec feature
