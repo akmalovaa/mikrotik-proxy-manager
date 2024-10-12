@@ -4,7 +4,7 @@ WORKDIR /srv/
 COPY pyproject.toml .
 COPY poetry.lock .
 
-RUN apt-get update && apt-get install -y --no-install-recommends g++ gcc git libcairo2-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential libffi-dev gcc git libcairo2-dev \
     pkg-config python3-dev
 RUN pip install -U pip && pip install poetry
 
