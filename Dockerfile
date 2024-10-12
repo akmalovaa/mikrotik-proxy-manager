@@ -4,7 +4,9 @@ WORKDIR /srv/
 COPY pyproject.toml .
 COPY poetry.lock .
 
-RUN apt update && pip install poetry
+RUN apt update
+RUN python3.13 -m pip install --pre cffi==1.17.0rc1
+RUN pip install poetry
 
 RUN poetry config virtualenvs.create false
 RUN poetry install
