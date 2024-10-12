@@ -12,7 +12,7 @@ Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Contain
 - Public ip address
 - Domain name
 
-### Goal
+## Goal
 
 Adding hosts in the winbox interface automatically creates a dynamic configuration for traefik
 
@@ -21,6 +21,10 @@ Obtaining SSL certificates via letsEncrypt or wildcard certs Clouflare API
 Containers:
 - traefik
 - mikrotik-proxy-manager (python app) 
+
+## Guide 
+
+> **status:** in progress
 
 ### dev commands 
 
@@ -48,5 +52,5 @@ example commands:
 /container/add remote-image=python:3.12.7-slim interface=veth1 root-dir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
 
 # test
-/container/add remote-image=akmalovaa/mikrotik-proxy-manager interface=veth1 root-dir=usb1/docker/mpm logging=yes start-on-boot=yes hostname=mpm dns=1.1.1.1
+/container/add remote-image=akmalovaa/mikrotik-proxy-manager interface=veth1 root-dir=usb1/docker/mpm logging=yes start-on-boot=yes mounts=logs hostname=mpm dns=1.1.1.1
 ```

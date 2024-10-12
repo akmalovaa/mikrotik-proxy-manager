@@ -102,7 +102,7 @@ def traefik_config_generate(events: dict) -> None:
     port = events.get("dst-port")
     disabled = events.get("disabled")
     number = events.get("number")
-    file = f"./traefik/dynamic/{number}.yaml"
+    file = f"{settings.traefik_configs_path}/{number}.yaml"
     name = f"{number}-{host.split('.')[0]}"
     traefik_router = {
         f'{name}-router': {

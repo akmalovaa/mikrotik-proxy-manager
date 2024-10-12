@@ -16,3 +16,5 @@ pytest.xml
 .venv
 temp
 logs.1.txt
+configs/*.yaml
+

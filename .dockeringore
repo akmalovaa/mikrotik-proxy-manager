@@ -11,6 +11,7 @@ compose.yaml
 *.txt
 .gitignore
 readme.md
+traefik
 **/__pycache__
 **/*.pyc
 .toml

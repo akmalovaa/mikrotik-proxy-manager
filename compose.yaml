@@ -7,9 +7,10 @@ services:
     environment:
       LOG_LEVEL: "INFO"
       MIKROTIK_LOG_FILE: "logs.0.txt"
+      TRAEFIK_CONFIGS_PATH: "./configs"
     volumes:
       - ./logs:/srv/logs
-  
+
   traefik:
     image: traefik:v3.1.6
     container_name: traefik
