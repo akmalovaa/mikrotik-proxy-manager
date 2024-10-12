@@ -21,7 +21,6 @@ class LogFileHandler(FileSystemEventHandler):
     def __init__(self, filename):
         self.filename = filename
         self.last_position = 0
-
     def on_modified(self, event):
         if event.src_path.endswith(self.filename):
             try:
@@ -140,7 +139,7 @@ if __name__ == "__main__":
     handler = LogFileHandler(settings.mikrotik_log_file)
     
     observer = Observer()
-    observer.schedule(handler, path='.', recursive=False)
+    observer.schedule(handler, path='./logs', recursive=False)
     observer.start()
 
     try:

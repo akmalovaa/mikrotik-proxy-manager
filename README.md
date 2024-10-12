@@ -31,7 +31,7 @@ python -m mikrotik-proxy-manager
 - https://registry-1.docker.io
 - https://ghcr.io 
 
-no space to extract layer -> need root-dir
+Error `no space to extract layer` -> need root-dir
 
 example commands:
 ```shell

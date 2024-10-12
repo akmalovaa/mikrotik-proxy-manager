@@ -15,4 +15,4 @@ pytest.xml
 .python-version
 .venv
 temp
-logs.0.txt
+logs.1.txt
