@@ -1,5 +1,4 @@
-FROM python:3.12.7-slim
-
+FROM python:3.13.0-slim-bookworm
 WORKDIR /srv/
 
 COPY pyproject.toml .
