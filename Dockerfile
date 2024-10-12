@@ -1,4 +1,4 @@
-FROM python:3.13.0-slim-bookworm
+FROM python:3.12.7-slim-bookworm
 WORKDIR /srv/
 
 COPY pyproject.toml .
@@ -6,7 +6,6 @@ COPY poetry.lock .
 
 RUN apt update
 RUN apt install -y gcc cmake make libc-dev-bin libc6-dev && pip install --upgrade pip
-RUN python3.13 -m pip install --pre cffi==1.17.0rc1
 RUN pip install poetry
 
 RUN poetry config virtualenvs.create false
