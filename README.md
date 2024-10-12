@@ -1,26 +1,22 @@
 # mikrotik-proxy-manager
 
-> **status:** in development
+Simple reverse proxy, managing hosts from winbox
 
-Built-in router, simple reverse proxy
-Managing proxy hosts with winbox
+Adding hosts in the winbox interface automatically creates a dynamic configuration for traefik
 
-Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Container)
+![scheme](./images/scheme.excalidraw.png)
+
+Obtaining SSL certificates via letsEncrypt or wildcard certs Clouflare API
+
+
+Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Container):
+- traefik
+- mikrotik-proxy-manager (python app) 
 
 **For the service to work, you need:**
 - RouterOS with enabled container feature (arm64, x86)
 - Public ip address
 - Domain name
-
-## Goal
-
-Adding hosts in the winbox interface automatically creates a dynamic configuration for traefik
-
-Obtaining SSL certificates via letsEncrypt or wildcard certs Clouflare API
-
-Containers:
-- traefik
-- mikrotik-proxy-manager (python app) 
 
 ## Guide 
 
@@ -28,14 +24,15 @@ Containers:
 
 ### dev commands 
 
+python
 ```
-python -m mikrotik-proxy-manager
+poetry install 
+poetry shell
+python -m mikrotik_proxy_manager
 ```
 
-- https://registry-1.docker.io
-- https://ghcr.io 
+registry-url: https://registry-1.docker.io
 
-Error `no space to extract layer` -> need root-dir
 
 example commands:
 ```shell
