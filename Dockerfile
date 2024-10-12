@@ -14,4 +14,4 @@ RUN pip uninstall pipenv poetry -y
 
 COPY . .
 
-CMD ["python", "-m", "mikrotik-proxy-manager"]
+CMD ["python", "-m", "mikrotik_proxy_manager"]

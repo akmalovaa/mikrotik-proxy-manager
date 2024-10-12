@@ -1,9 +1,9 @@
 services:
   mikrotik-proxy-manager:
-    image: mikrotik-proxy-manager:0.1.0
+    image: mikrotik-proxy-manager:v0.1.0
     container_name: mikrotik-proxy-manager
     restart: unless-stopped
-    command: ["python", "-m", "mikrotik-proxy-manager"]
+    command: ["python", "-m", "mikrotik_proxy_manager"]
     environment:
       LOG_LEVEL: "INFO"
       MIKROTIK_LOG_FILE: "logs.0.txt"
@@ -11,7 +11,7 @@ services:
       - ./logs:/srv/logs
   
   traefik:
-    image: traefik:v3.2
+    image: traefik:v3.1.6
     container_name: traefik
     restart: unless-stopped
     environment:
