@@ -4,11 +4,11 @@ on:
   schedule:
     - cron: '0 0 1 * *'
   push:
-    branches: [ "main" ]
+    # branches: [ "main" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
-  pull_request:
-    branches: [ "main" ]
+  # pull_request:
+  #   branches: [ "main" ]
 
 env:
 #   REGISTRY: ghcr.io
