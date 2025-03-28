@@ -1,17 +1,23 @@
-FROM python:3.12.7-slim-bookworm
-WORKDIR /srv/
+ARG PYTHON_VERSION=3.13.2
+ARG UV_VERSION=latest
 
-COPY pyproject.toml .
-COPY poetry.lock .
+FROM ghcr.io/astral-sh/uv:$UV_VERSION AS uv
 
-RUN apt-get update && pip install poetry
+FROM python:$PYTHON_VERSION-slim
 
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-interaction
+ENV PYTHONUNBUFFERED=1
+ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
+# ENV PATH="/app/.venv/bin:$PATH"
 
-RUN apt-get clean && rm -rf /var/lib/apt/lists/* && apt-get autoremove -y
-RUN pip uninstall pipenv poetry -y
+WORKDIR /app
+
+COPY --from=uv /uv /uvx /bin/
+COPY pyproject.toml uv.lock ./
+
+RUN uv sync --frozen --compile-bytecode --no-install-project --no-install-workspace --python-preference only-system 
 
 COPY . .
+
+EXPOSE 8000
 
 CMD ["python", "-m", "mikrotik_proxy_manager"]

@@ -1,0 +1,43 @@
+services:
+  mikrotik-proxy-manager:
+    # image: mikrotik-proxy-manager:latest
+    build:
+      dockerfile: Dockerfile
+    container_name: mikrotik-proxy-manager
+    restart: unless-stopped
+    command: ["python", "-m", "mikrotik_proxy_manager"]
+    environment:
+      LOG_LEVEL: "INFO"
+      MIKROTIK_LOG_FILE: "logs.0.txt"
+      TRAEFIK_CONFIGS_PATH: "./configs"
+    volumes:
+      - ./logs:/srv/logs
+
+  traefik:
+    image: traefik:3.3.4
+    container_name: traefik
+    restart: unless-stopped
+    # environment:
+    #   CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+    ports:
+      - "443:443"
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
+      - "./configs:/etc/traefik/dynamic"
+      - "./traefik/acme.json:/acme.json"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.traefik-secure.tls=true"
+
+  whoami:
+    image: "traefik/whoami"
+    ports:
+      - "8000:80"
+    container_name: "simple-service"
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
+    #   - "traefik.http.routers.whoami.entrypoints=websecure"
+    #   - "traefik.http.routers.whoami.tls.certresolver=myresolver"

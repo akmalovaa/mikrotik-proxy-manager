@@ -1,5 +1,5 @@
 global:
-  checkNewVersion: true
+  checkNewVersion: false
   sendAnonymousUsage: false
 
 entryPoints:
@@ -83,6 +83,7 @@ certificatesResolvers:
       httpChallenge:
         entryPoint: web
 
+## For cloudlfare dns challenge
 # certificatesResolvers:
 #   cloudflare:
 #     acme:

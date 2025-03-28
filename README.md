@@ -23,13 +23,14 @@ Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Contain
 ## Guide
 
 ### Prepare
-RouterOS Container package needs to be installed (enable container mode)
+RouterOS Container package needs to be installed (enable container mode) 
+Install container mode - https://help.mikrotik.com/docs/display/ROS/Container
 
 > [!NOTE]  
 > External disk is highly recommended (formatting USB on ext4)
 
 Copy the configuration to your device
-```bash
+```shell
 git clone https://github.com/akmalovaa/mikrotik-proxy-manager.git 
 ```
 dragging and dropping or SMB, NFS, SFTP copy-past
@@ -84,6 +85,8 @@ add action=logfile topics=system,info
 set registry-url=https://registry-1.docker.io tmpdir=usb1/tmp
 ```
 
+github registry - `https://ghcr.io`
+
 **mount points**
 ```routeros
 /container mounts
@@ -117,13 +120,16 @@ At the current time, it works very simply, parse only:
 
 python
 ```
-poetry install && poetry shell
-python -m mikrotik_proxy_manager
+uv sync
+uv run python -m mikrotik_proxy_manager
 ```
 
 
 example commands:
 ```shell
+# whoami
+/container/add remote-image=ghcr.io/traefik/whoami:latest interface=veth1 root-dir=/docker/whoami logging=yes
+
 # NGINX
 /container/add remote-image=nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes
 

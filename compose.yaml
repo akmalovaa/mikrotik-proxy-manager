@@ -12,11 +12,9 @@ services:
       - ./logs:/srv/logs
 
   traefik:
-    image: traefik:v3.1.6
+    image: traefik:3.3.4
     container_name: traefik
     restart: unless-stopped
-    environment:
-      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
     ports:
       - "443:443"
       - "80:80"
@@ -25,18 +23,3 @@ services:
       - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
       - "./traefik/config:/etc/traefik/dynamic"
       - "./traefik/acme.json:/acme.json"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik-secure.tls=true"
-      # - "traefik.http.routers.traefik-secure.tls.certresolver=cloudflare"
-      # - "traefik.http.routers.traefik-secure.tls.domains[0].main=akmalov.com"
-      # - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.akmalov.com"
-
-  # whoami:
-  #   image: "traefik/whoami"
-  #   container_name: "simple-service"
-  #   labels:
-  #     - "traefik.enable=true"
-  #     - "traefik.http.routers.whoami.rule=Host(`whoami.example.com`)"
-  #     - "traefik.http.routers.whoami.entrypoints=websecure"
-  #     - "traefik.http.routers.whoami.tls.certresolver=myresolver"
