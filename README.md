@@ -24,6 +24,7 @@ Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Contain
 
 ### Prepare
 RouterOS Container package needs to be installed (enable container mode) 
+
 Install container mode - https://help.mikrotik.com/docs/display/ROS/Container
 
 > [!NOTE]  
