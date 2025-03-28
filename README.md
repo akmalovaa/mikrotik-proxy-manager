@@ -88,6 +88,8 @@ set registry-url=https://registry-1.docker.io tmpdir=usb1/tmp
 
 github registry - `https://ghcr.io`
 
+use `mirror.gcr.io` for quick download, example: `mirror.gcr.io/traefik:3.3.4`
+
 **mount points**
 ```routeros
 /container mounts
@@ -135,7 +137,7 @@ example commands:
 /container/add remote-image=nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes
 
 # python image for debug and shell exec
-/container/add remote-image=python:3.12.7-slim interface=veth1 root-dir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
+/container/add remote-image=python:3.13.2-slim interface=veth1 root-dir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
 ```
 
 > [!IMPORTANT] 
