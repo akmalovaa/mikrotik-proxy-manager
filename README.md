@@ -37,6 +37,18 @@ git clone https://github.com/akmalovaa/mikrotik-proxy-manager.git
 dragging and dropping or SMB, NFS, SFTP copy-past
 ![files](./images/files.png)
 
+```routeros
+# Create folder usb1 + logs
+file/add name=usb1/logs type=director
+
+# Fetch static config traefik yaml
+/tool fetch url="https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/traefik/traefik.yml" mode=https dst-path="usb1/traefik/traefik.yml"
+
+# Fetch dynamic config
+/tool fetch url="https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/configs/example.yml" mode=https dst-path="usb1/configs/example.yml"
+```
+
+
 necessary folders:
 - configs
 - traefik
@@ -90,6 +102,8 @@ github registry - `https://ghcr.io`
 
 use `mirror.gcr.io` for quick download, example: `mirror.gcr.io/traefik:3.3.4`
 
+
+
 **mount points**
 ```routeros
 /container mounts
@@ -101,12 +115,12 @@ add name=mpm_config src=/usb1/configs dst=/srv/configs
 
 **traefik**
 ```routeros
-/container/add remote-image=traefik:v3.1.6 interface=veth1 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
+/container/add remote-image=mirror.gcr.io/traefik:3.3.4 interface=veth1 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
 ```
 
 **mikrotik-proxy-manager**
 ```routeros
-/container/add remote-image=akmalovaa/mikrotik-proxy-manager interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_logs,mpm_config logging=yes start-on-boot=yes
+/container/add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest envlist=log interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_logs,mpm_config logging=yes start-on-boot=yes
 ```
 
 Run containers 
@@ -127,11 +141,15 @@ uv sync
 uv run python -m mikrotik_proxy_manager
 ```
 
+debug container:
+```
+ghcr.io/traefik/whoami
+```
 
 example commands:
 ```shell
 # whoami
-/container/add remote-image=ghcr.io/traefik/whoami:latest interface=veth1 root-dir=/docker/whoami logging=yes
+/container/add remote-image=ghcr.io/traefik/whoami:latest interface=veth2 root-dir=/docker/whoami logging=yes
 
 # NGINX
 /container/add remote-image=nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes

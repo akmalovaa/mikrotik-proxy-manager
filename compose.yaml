@@ -1,6 +1,6 @@
 services:
   mikrotik-proxy-manager:
-    image: mikrotik-proxy-manager:latest
+    image: ghcr.io/akmalovaa/mikrotik-proxy-manager:latest
     container_name: mikrotik-proxy-manager
     restart: unless-stopped
     command: ["python", "-m", "mikrotik_proxy_manager"]

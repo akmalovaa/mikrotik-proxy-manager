@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED=1
 ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
 # ENV PATH="/app/.venv/bin:$PATH"
 
-WORKDIR /app
+WORKDIR /srv
 
 COPY --from=uv /uv /uvx /bin/
 COPY pyproject.toml uv.lock ./
