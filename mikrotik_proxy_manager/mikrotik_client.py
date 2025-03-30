@@ -41,5 +41,5 @@ class MikroTikClient:
             proxy_list = mikrotik_api.get_resource("/ip/proxy/access").get()
         else:
             logger.error("Failed to test connection: Connection to MikroTik not established.")
-        self.disconnect()
+        # self.disconnect()
         return proxy_list

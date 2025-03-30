@@ -5,11 +5,11 @@ services:
     restart: unless-stopped
     command: ["python", "-m", "mikrotik_proxy_manager"]
     environment:
+      MIKROTIK_HOST: ${MIKROTIK_HOST:-'192.168.88.1'}
+      MIKROTIK_USER: ${MIKROTIK_USER:-'user-api'}
+      MIKROTIK_PASSWORD: ${MIKROTIK_PASSWORD:-'password'}
       LOG_LEVEL: "INFO"
       TRAEFIK_CONFIGS_PATH: "./configs"
-      MIKROTIK_HOST: "192.168.88.1"
-      MIKROTIK_USER: "user-api"
-      MIKROTIK_PASSWORD: "SuperPassword"
     volumes:
       - ./configs:/srv/configs
 
