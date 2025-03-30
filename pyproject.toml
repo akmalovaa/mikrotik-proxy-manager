@@ -8,4 +8,6 @@ dependencies = [
     "loguru>=0.7.3",
     "pydantic-settings>=2.8.1",
     "pyyaml>=6.0.2",
+    "routeros-api>=0.21.0",
+    "schedule>=1.2.2",
 ]

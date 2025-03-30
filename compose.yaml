@@ -6,10 +6,11 @@ services:
     command: ["python", "-m", "mikrotik_proxy_manager"]
     environment:
       LOG_LEVEL: "INFO"
-      MIKROTIK_LOG_FILE: "logs/logs.0.txt"
       TRAEFIK_CONFIGS_PATH: "./configs"
+      MIKROTIK_HOST: "192.168.88.1"
+      MIKROTIK_USER: "user-api"
+      MIKROTIK_PASSWORD: "SuperPassword"
     volumes:
-      - ./logs:/srv/logs
       - ./configs:/srv/configs
 
   traefik:

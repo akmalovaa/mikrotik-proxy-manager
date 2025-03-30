@@ -1,11 +1,13 @@
-import time
 import yaml
 import os
 import sys
+import schedule
+import time
+import re
 
 from loguru import logger
-
 from mikrotik_proxy_manager.settings import settings
+from mikrotik_proxy_manager.mikrotik_client import MikroTikClient
 
 logger.remove()
 logger.add(
@@ -14,127 +16,48 @@ logger.add(
     format="{time:DD.MM.YY HH:mm:ss} {level} {message}",
 )
 
-class FileMonitor:
-    def __init__(self, filename: str):
-        self.filename = filename
-        self.last_position: int = 0
-        
-    def read_new_lines(self) -> None:
+mikrotik = MikroTikClient(settings.mikrotik_host, settings.mikrotik_user, settings.mikrotik_password)
+
+PROXY_LAST_CONFIG:list[dict] = []
+
+
+def traefik_config_rm(id:str | None) -> None:
+    if not id:
+        return
+    else:
+        file_id = id[1:] if id else 0
+    file = f"{settings.traefik_configs_path}/{file_id}.yaml"
+    logger.debug(f"Attempting to remove config: {file}")
+    if os.path.exists(file):
         try:
-            with open(self.filename, 'r') as file:
-                file.seek(self.last_position)
-                lines = file.readlines()
-                
-                for line in lines:
-                    if "ip proxy" in line.lower():
-                        logger.info(f"proxy event: {line.strip()}")
-                        events = proxy_events(line.strip())
-                        traefik_config_generate(events)
-                    else:
-                        logger.debug(f"skip line: {line.strip()}")
-                    # if line.strip():
-                    #     logger.info(f"New line: {line.strip()}")
-                
-                self.last_position = file.tell()
-                
-        except FileNotFoundError:
-            logger.info("File not found")
-            raise
-        except IOError as e:
-            logger.info(f"File reading error: {e}")
-            time.sleep(5) # Wait before retrying
-
-            
-    def monitor(self) -> None:
-        while True:
-            try:
-                self.read_new_lines()
-                time.sleep(1)
-            except KeyboardInterrupt:
-                logger.info("Keyboard Interrupt")
-                break
-            except Exception as e:
-                logger.info(f"Error: {e}")
-                time.sleep(5)
+            os.remove(file)
+            logger.info(f"Removed config: {file}")
+        except Exception as e:
+            logger.warning(f"Error deleting {file}: {e}")
+    else:
+        logger.debug(f"File does not exist: {file}")
 
 
+def traefik_config_add(rule:dict, rule_name:str) -> None:
+    id = rule.get('id')
+    ip = rule.get('dst-address')
+    port = rule.get('dst-port')
+    host = rule.get('dst-host')
+    file_id = id[1:] if id else "unknown"
+    file = f"{settings.traefik_configs_path}/{file_id}.yaml"
 
-def proxy_events(log_line:str) -> dict:
-    logger.debug(f"Parse log line: {log_line}")
-    start_index: int = log_line.find('/ip proxy access')
-    event: str = ""
-    event_number: str = ""
-    # proxy_events: dict = {}
-    if start_index != -1:
-        command = log_line[start_index:]
-        events_str: str = command.replace('/ip proxy access ', '').strip(')')
-        events_list: list = events_str.split()
-        event = events_list[0]
-        
-        # ADD event log structure changed
-        if event == 'add':
-            star_pos = log_line.find('(*')
-            if star_pos != -1:
-                start_pos = log_line.find('(', star_pos)
-                close_pos = log_line.find('=', start_pos)
-                if start_pos != -1 and close_pos != -1:
-                    event_number = log_line[start_pos + 2:close_pos]
-        else:
-            event_number = events_list[1].strip('*')
-        proxy_events: dict = {
-            'event': event,
-            'number': event_number.replace(' ', ''),
-            'disabled': "",
-            'dst-address': "",
-            'dst-host': "",
-            'dst-port': ""
-        }
-        if event == 'set' or event == 'add':
-            for part in events_list[2:]:
-                key, value = part.split('=')
-                proxy_events[key] = value
-    return proxy_events
-
-
-def traefik_config_rm(file:str) -> None:
-    try:
-        os.remove(file)
-        logger.info(f"Remove config: {file}")
-    except Exception as e:
-        logger.error(f"Error deleting:{file}, {e}")
-
-
-def traefik_config_add(config:str, file:str) -> None:
-    try:
-        with open(file, 'w') as f:
-            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
-        logger.info(f"Add config: {file}")
-    except Exception as e:
-        logger.error(f"Error when adding a file:{file}, {e}")
-
-
-def traefik_config_generate(events: dict) -> None:
-    logger.debug(f"Generate config: {events}")
-    event = events.get("event")
-    host = events.get("dst-host")
-    ip = events.get("dst-address")
-    port = events.get("dst-port")
-    disabled = events.get("disabled")
-    number = events.get("number")
-    file = f"{settings.traefik_configs_path}/{number}.yaml"
-    name = f"{number}-{host.split('.')[0]}"
     traefik_router = {
-        f'{name}-router': {
+        f'{rule_name}-router': {
             'entryPoints': ['websecure'],
             'rule': f"Host(`{host}`)",
-            'service': f'{name}-service',
+            'service': f'{rule_name}-service',
             'tls': {
                 'certResolver': 'letsEncrypt'
             }
         }
     }
     traefik_service = {
-        f'{name}-service': {
+        f'{rule_name}-service': {
             'loadBalancer': {
                 'servers': [{'url': f'http://{ip}:{port}'}]
             }
@@ -147,13 +70,80 @@ def traefik_config_generate(events: dict) -> None:
         }
     }
     logger.debug(f"Result config: {config}")
-    if event == "add" and disabled == "no" or event == "set" and disabled == "no":
-        traefik_config_add(config, file)
-    if event == "remove" or disabled == "yes":
-        traefik_config_rm(file)
+
+
+    try:
+        with open(file, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+        logger.info(f"Add config: {file}")
+    except Exception as e:
+        logger.error(f"Error when adding a file:{file}, {e}")
+
+
+def extract_name_from_domain(domain: str) -> str | None:
+    """Extract name from domain for traefik config, to create router and service"""
+    logger.debug(f"Extract name from domain: {domain}")
+    if not domain:
+        return None
+    if domain.count('.') < 1 or domain.startswith('.'):
+        logger.warning(f"dst-host - incorrect domain format: {domain}")
+        return None
+    if not re.match(r'^[a-zA-Z0-9.-]+$', domain):
+        logger.warning(f"dst-host - invalid domain format: {domain}")
+        return None
+    parts = domain.split('.')
+    if len(parts) >= 3:
+        return f"{parts[0]}_{parts[-2]}"
+    return parts[0]
+
+
+def generate_traefik_config(proxy_list: list) -> list:
+    for rule in proxy_list:
+        id = rule.get('id')
+        if rule.get('disabled') == 'true':
+            logger.info(f"Rule with id: {id} is disabled")
+            traefik_config_rm(id)
+            continue
+        dst_host: str = rule.get('dst-host', '')
+        rule_name: str | None = extract_name_from_domain(dst_host)
+        if not rule_name:
+            logger.warning(f"Missing dst-host in the rule with id: {id}")
+            traefik_config_rm(id)
+            continue
+        dst_port: str = rule.get('dst-port', '')
+        if not dst_port:
+            logger.warning(f"Missing dst-port in the rule with id: {id}")
+            traefik_config_rm(id)
+            continue
+        dst_address: str = rule.get('dst-address', '')
+        if not dst_address:
+            logger.warning(f"Missing dst-address in the rule with id: {id}")
+            traefik_config_rm(id)
+            continue
+        traefik_config_add(rule, rule_name)
+    return proxy_list
+
+
+def sync_proxy_config():
+    global PROXY_LAST_CONFIG
+    proxy_list = mikrotik.fetch_proxy_list()
+    if PROXY_LAST_CONFIG == proxy_list:
+        logger.debug("No changes in the proxy list")
+        return
+    else:
+        PROXY_LAST_CONFIG = generate_traefik_config(proxy_list)
+
+
+def run_scheduler():
+    logger.info("Run scheduler: sync traefik config every 10 seconds")
+    
+    schedule.every(5).seconds.do(sync_proxy_config)
+    
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 
 if __name__ == "__main__":
-    logger.info(f"Monitoring of the {settings.mikrotik_log_file} file is running")
-    monitor = FileMonitor(settings.mikrotik_log_file)
-    monitor.monitor()
+    logger.info("Mikrotik Proxy Manager started")
+    run_scheduler()
