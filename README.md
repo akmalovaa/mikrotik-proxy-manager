@@ -21,7 +21,7 @@ Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Contain
 
 ## Guide
 
-### Prepare
+### Prepare Router OS
 RouterOS - https://help.mikrotik.com/docs/display/ROS/Container
 
 Container package needs to be installed (enable container mode) 
@@ -29,40 +29,61 @@ Container package needs to be installed (enable container mode)
 > [!NOTE]  
 > External disk is highly recommended (formatting USB on ext4)
 
+### Prepare API SSL
+
+Create certifcates
+```routeros
+/certificate
+add name=CA-Template common-name=CAtemp key-usage=key-cert-sign,crl-sign
+add name=Server common-name=server
+add name=Client common-name=client
+```
+
+Certificates should be signed. 
+**Change your RouterOS host address**
+```routeros
+/certificate
+sign CA-Template
+sign Client     
+sign Server ca-crl-host=192.168.88.1 name=ServerCA
+```
+
+Enable API-SSL. **Change api access address**
+```routeros
+/ip service
+set api-ssl address=192.168.88.0/24 certificate=ServerCA
+```
+
+Create group for only read API info + create a user for that group
+```routeros
+/user group
+add name=api2 policy=local,read,write,api,rest-api,!telnet,!ssh,!ftp,!reboot,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!romon
+/user add name=user-api group=api password=password
+```
+
 ### RouterOS Files
 
 necessary folders:
-- configs
-- traefik
-- logs
+- usb1/configs (mount to python + traefik)
+- usb1/traefik (mount static traefik config)
 
 ```routeros
-# Create folder usb1 + logs
-file/add name=usb1/logs type=director
+file/add name=usb1 type=directory
+file/add name=usb1/configs type=directory
+```
 
-# Fetch static config traefik yaml
+Fetch static config traefik yaml
+```routeros
+file/add name=usb1 type=directory
+file/add name=usb1/configs type=directory
+
 /tool fetch url="https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/traefik/traefik.yml" mode=https dst-path="usb1/traefik/traefik.yml"
-
-# Fetch example dynamic config
-/tool fetch url="https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/configs/example.yml" mode=https dst-path="usb1/configs/example.yml"
 ```
-
-
-Or Manual copy the configuration to your device
-```shell
-git clone https://github.com/akmalovaa/mikrotik-proxy-manager.git 
-```
-dragging and dropping or SMB, NFS, SFTP copy-past
-
-Example of file location:
-![files](./images/files.png)
-
-
 
 
 
 ### Network
-Create separate bridge + ip address 
+Create separate bridge + ip address - **Change YOUR IP Addresses**
 ```routeros
 /interface/bridge/add name=br-docker
 /ip/address/add address=10.0.0.1/24 interface=br-docker
@@ -84,41 +105,39 @@ add action=dst-nat chain=dstnat comment=http dst-port=80 protocol=tcp to-address
 add action=dst-nat chain=dstnat comment=https dst-port=443 protocol=tcp to-addresses=10.0.0.10 to-ports=44
 ```
 
-### Logging
-
-write logs to file, `usb1/logs/logs.0.txt`
-```routeros
-/system logging action
-add disk-file-count=1 disk-file-name=usb1/logs/logs disk-lines-per-file=100 name=logfile target=disk
-/system logging
-add action=logfile topics=system,info
-```
-
-
 ### Contaier settings
 
-![containers](./images/containers.png)
+Registry
+- docker.io
+- mirror.gcr.io (docker mirror)
+- ghcr.io (github registry)
 
-**base config docker-hub registry**
-```routeros
-/container config
-set registry-url=https://registry-1.docker.io tmpdir=usb1/tmp
-```
+use the appropriate registry by writing the full name of the container path
 
-github registry - `https://ghcr.io`
-
-use `mirror.gcr.io` for quick download, example: `mirror.gcr.io/traefik:3.3.4`
+`mirror.gcr.io` + `traefik:3.3.4`   reuslt: `mirror.gcr.io/traefik:3.3.4`
 
 
 
 **mount points**
+
 ```routeros
 /container mounts
 add name=traefik_static src=/usb1/traefik dst=/etc/traefik
 add name=traefik_dynamic src=/usb1/configs dst=/configs
-add name=mpm_logs src=/usb1/logs dst=/srv/logs
 add name=mpm_config src=/usb1/configs dst=/srv/configs
 ```
+
+**environments**
+
+API user password
+```
+/container envs
+add key=MIKROTIK_HOST name=mpm value=192.168.88.1
+add key=MIKROTIK_USER name=mpm value=user-api
+add key=MIKROTIK_PASSWORD name=mpm value=password
+```
+
+
 
 **traefik**
 ```routeros
@@ -127,7 +146,7 @@ add name=mpm_config src=/usb1/configs dst=/srv/configs
 
 **mikrotik-proxy-manager**
 ```routeros
-/container/add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest envlist=log interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_logs,mpm_config logging=yes start-on-boot=yes
+/container/add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest envlist=mpm interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_config logging=yes start-on-boot=yes
 ```
 
 Run containers 
