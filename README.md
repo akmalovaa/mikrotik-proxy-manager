@@ -85,13 +85,13 @@ file/add name=usb1/configs type=directory
 ### Network
 Create separate bridge + ip address - **Change YOUR IP Addresses**
 ```routeros
-/interface/bridge/add name=br-docker
-/ip/address/add address=10.0.0.1/24 interface=br-docker
+/interface/bridge/add name=br-container
+/ip/address/add address=10.0.0.1/24 interface=br-container
 ```
 Create virtal interface
 ```routeros
 /interface/veth/add name=veth1 address=10.0.0.10/24 gateway=10.0.0.1
-/interface/bridge/port/add bridge=br-docker interface=veth1
+/interface/bridge/port/add bridge=br-container interface=veth1
 ```
 NAT config
 ```routeros
