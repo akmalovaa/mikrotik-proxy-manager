@@ -6,7 +6,7 @@ services:
     command: ["python", "-m", "mikrotik_proxy_manager"]
     environment:
       LOG_LEVEL: "INFO"
-      MIKROTIK_LOG_FILE: "logs.0.txt"
+      MIKROTIK_LOG_FILE: "logs/logs.0.txt"
       TRAEFIK_CONFIGS_PATH: "./configs"
     volumes:
       - ./logs:/srv/logs

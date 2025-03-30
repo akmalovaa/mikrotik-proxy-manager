@@ -152,10 +152,10 @@ example commands:
 /container/add remote-image=ghcr.io/traefik/whoami:latest interface=veth2 root-dir=/docker/whoami logging=yes
 
 # NGINX
-/container/add remote-image=nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes
+/container/add remote-image=mirror.gcr.io/nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes
 
 # python image for debug and shell exec
-/container/add remote-image=python:3.13.2-slim interface=veth1 root-dir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
+/container/add remote-image=mirror.gcr.io/python:3.13.2-slim interface=veth1 root-dir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
 ```
 
 > [!IMPORTANT] 

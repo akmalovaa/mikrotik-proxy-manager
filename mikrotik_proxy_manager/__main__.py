@@ -3,9 +3,6 @@ import yaml
 import os
 import sys
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-
 from loguru import logger
 
 from mikrotik_proxy_manager.settings import settings
@@ -17,26 +14,49 @@ logger.add(
     format="{time:DD.MM.YY HH:mm:ss} {level} {message}",
 )
 
-class LogFileHandler(FileSystemEventHandler):
-    def __init__(self, filename):
+class FileMonitor:
+    def __init__(self, filename: str):
         self.filename = filename
-        self.last_position = 0
-    def on_modified(self, event):
-        if event.src_path.endswith(self.filename):
-            try:
-                with open(event.src_path, 'r') as file:
-                    file.seek(self.last_position)
-                    new_lines = file.readlines()
-                    self.last_position = file.tell()
+        self.last_position: int = 0
+        
+    def read_new_lines(self) -> None:
+        try:
+            with open(self.filename, 'r') as file:
+                file.seek(self.last_position)
+                lines = file.readlines()
+                
+                for line in lines:
+                    if "ip proxy" in line.lower():
+                        logger.info(f"proxy event: {line.strip()}")
+                        events = proxy_events(line.strip())
+                        traefik_config_generate(events)
+                    else:
+                        logger.debug(f"skip line: {line.strip()}")
+                    # if line.strip():
+                    #     logger.info(f"New line: {line.strip()}")
+                
+                self.last_position = file.tell()
+                
+        except FileNotFoundError:
+            logger.info("File not found")
+            raise
+        except IOError as e:
+            logger.info(f"File reading error: {e}")
+            time.sleep(5) # Wait before retrying
 
-                    for line in new_lines:
-                        if "ip proxy" in line.lower():
-                            events = proxy_events(line.strip())
-                            traefik_config_generate(events)
-                        else:
-                            logger.debug(f"Skip log line: {line.strip()}")
+            
+    def monitor(self) -> None:
+        while True:
+            try:
+                self.read_new_lines()
+                time.sleep(1)
+            except KeyboardInterrupt:
+                logger.info("Keyboard Interrupt")
+                break
             except Exception as e:
-                logger.error(f"Error reading file: {str(e)}")
+                logger.info(f"Error: {e}")
+                time.sleep(5)
+
 
 
 def proxy_events(log_line:str) -> dict:
@@ -44,7 +64,7 @@ def proxy_events(log_line:str) -> dict:
     start_index: int = log_line.find('/ip proxy access')
     event: str = ""
     event_number: str = ""
-    proxy_events: dict = {}
+    # proxy_events: dict = {}
     if start_index != -1:
         command = log_line[start_index:]
         events_str: str = command.replace('/ip proxy access ', '').strip(')')
@@ -61,7 +81,6 @@ def proxy_events(log_line:str) -> dict:
                     event_number = log_line[start_pos + 2:close_pos]
         else:
             event_number = events_list[1].strip('*')
-        
         proxy_events: dict = {
             'event': event,
             'number': event_number.replace(' ', ''),
@@ -135,16 +154,6 @@ def traefik_config_generate(events: dict) -> None:
 
 
 if __name__ == "__main__":
-    logger.info(f"Start watch log file: {settings.mikrotik_log_file}")
-    handler = LogFileHandler(settings.mikrotik_log_file)
-    
-    observer = Observer()
-    observer.schedule(handler, path='./logs', recursive=False)
-    observer.start()
-
-    try:
-        while True:
-            time.sleep(5)
-    except KeyboardInterrupt:
-        observer.stop()
-    observer.join()
+    logger.info(f"Monitoring of the {settings.mikrotik_log_file} file is running")
+    monitor = FileMonitor(settings.mikrotik_log_file)
+    monitor.monitor()
