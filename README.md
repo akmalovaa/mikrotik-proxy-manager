@@ -6,7 +6,7 @@ Adding hosts in the winbox interface automatically creates a dynamic configurati
 
 ![scheme](./images/scheme.excalidraw.png)
 
-Obtaining SSL certificates via letsEncrypt or wildcard certs Clouflare API
+LetsEncrypt (httpChallenge) for auto obtain SSL certificates
 
 
 Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Container):
@@ -18,24 +18,23 @@ Uses containers in [RouterOS](https://help.mikrotik.com/docs/display/ROS/Contain
 - Public ip address
 - Domain name
 
-> An easier way to use a reverse proxy server without a public IP [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) (Only for cloudflare DNS provider)
 
 ## Guide
 
 ### Prepare
-RouterOS Container package needs to be installed (enable container mode) 
+RouterOS - https://help.mikrotik.com/docs/display/ROS/Container
 
-Install container mode - https://help.mikrotik.com/docs/display/ROS/Container
+Container package needs to be installed (enable container mode) 
 
 > [!NOTE]  
 > External disk is highly recommended (formatting USB on ext4)
 
-Copy the configuration to your device
-```shell
-git clone https://github.com/akmalovaa/mikrotik-proxy-manager.git 
-```
-dragging and dropping or SMB, NFS, SFTP copy-past
-![files](./images/files.png)
+### RouterOS Files
+
+necessary folders:
+- configs
+- traefik
+- logs
 
 ```routeros
 # Create folder usb1 + logs
@@ -44,15 +43,23 @@ file/add name=usb1/logs type=director
 # Fetch static config traefik yaml
 /tool fetch url="https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/traefik/traefik.yml" mode=https dst-path="usb1/traefik/traefik.yml"
 
-# Fetch dynamic config
+# Fetch example dynamic config
 /tool fetch url="https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/configs/example.yml" mode=https dst-path="usb1/configs/example.yml"
 ```
 
 
-necessary folders:
-- configs
-- traefik
-- logs
+Or Manual copy the configuration to your device
+```shell
+git clone https://github.com/akmalovaa/mikrotik-proxy-manager.git 
+```
+dragging and dropping or SMB, NFS, SFTP copy-past
+
+Example of file location:
+![files](./images/files.png)
+
+
+
+
 
 ### Network
 Create separate bridge + ip address 
@@ -67,7 +74,7 @@ Create virtal interface
 ```
 NAT config
 ```routeros
-/ip/firewall/nat/add chain=srcnat action=masquerade src-address=10.0.0.10/24
+/ip/firewall/nat/add chain=srcnat action=masquerade src-address=10.0.0.0/24
 ```
 
 Firewall forward 80, 443 port to traefik proxy

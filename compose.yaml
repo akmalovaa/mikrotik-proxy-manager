@@ -10,6 +10,7 @@ services:
       TRAEFIK_CONFIGS_PATH: "./configs"
     volumes:
       - ./logs:/srv/logs
+      - ./configs:/srv/configs
 
   traefik:
     image: traefik:3.3.4
