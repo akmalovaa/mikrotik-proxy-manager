@@ -1,6 +1,0 @@
-example log format
-Oct/10/2024 02:36:25 system,info the proxy access rule changed by tcp-msg(winbox):admin@192.168.0.1 (/ip proxy access set *3 action=allow disabled=no dst-address=10.0.0.190 dst-host=test.exmaple.com dst-port=81)
-Oct/10/2024 02:36:27 system,info the proxy access rule removed by tcp-msg(winbox):admin@192.168.0.1 (/ip proxy access remove *4)
-the proxy access rule added by tcp-msg(winbox):admin@192.168.0.1 (*5 = /ip proxy access add action=allow disabled=no dst-address=10.0.0.12 dst-host=db.exmaple.com dst-port=3000)
-the proxy access rule added by tcp-msg(winbox):admin@192.168.0.1 (*6 = /ip proxy access add action=allow disabled=no dst-address=10.0.0.16 dst-host=db2.exmaple.com dst-port=3002)
-

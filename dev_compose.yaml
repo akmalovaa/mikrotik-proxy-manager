@@ -9,7 +9,6 @@ services:
     command: ["tail", "-f", "/dev/null"]
     environment:
       LOG_LEVEL: "DEBUG"
-      MIKROTIK_LOG_FILE: "logs.0.txt"
       TRAEFIK_CONFIGS_PATH: "./configs"
     volumes:
       - .:/srv
