@@ -4,7 +4,7 @@
 
 Adding hosts in the winbox interface automatically creates a dynamic configuration for traefik
 
-![scheme](./images/scheme.excalidraw.png)
+![scheme](./.github/images/scheme.excalidraw.png)
 
 LetsEncrypt (httpChallenge) for auto obtain SSL certificates
 
@@ -57,7 +57,7 @@ set api-ssl address=192.168.88.0/24 certificate=ServerCA
 Create group for only read API info + create a user for that group
 ```routeros
 /user group
-add name=api2 policy=local,read,write,api,rest-api,!telnet,!ssh,!ftp,!reboot,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!romon
+add name=api2 policy=local,read,api,rest-api,!write,!telnet,!ssh,!ftp,!reboot,!policy,!test,!winbox,!password,!web,!sniff,!sensitive,!romon
 /user add name=user-api group=api password=password
 ```
 
@@ -158,6 +158,26 @@ At the current time, it works very simply, parse only:
 - DST-IP
 - DST-PORT
 
+### Add proxy servers
+
+Console
+```routeros
+/ip proxy access
+add dst-host=whoami.akmalov.com dst-address=192.168.0.5 dst-port=80
+```
+
+or Winbox UI
+
+![proxy](./.github/images/proxy.png)
+
+look config files
+
+![configs](./.github/images/configs.png)
+
+Check URL certs
+
+![url](./.github/images/url.png)
+
 
 ### Dev 
 
@@ -184,11 +204,6 @@ example commands:
 /container/add remote-image=mirror.gcr.io/python:3.13.2-slim interface=veth1 root-dir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
 ```
 
-> [!IMPORTANT] 
-> **RouterOS bags v7.16:**
-> 1. If change ram-high `/container config set ram-high=200`, container logs will be lost, ram-high must be = 0
-> 2. There is no way to passthrough a specific volume one file, only the entire directory
->
 
 > [!WARNING]  
 > **Security risks:**
@@ -198,6 +213,5 @@ example commands:
 > If the router is hacked, the containers can be used to easily install malicious software on your router and over the network
 
 TO DO:
-- fix build armv7 github action
 - mb add authelia authentication and authorization server
 - mb add crowdsec AppSec feature
