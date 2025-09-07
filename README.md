@@ -50,6 +50,8 @@ The system consists of two containers running in [RouterOS Container](https://he
 
 Before starting, prepare your MikroTik router with container support and API SSL settings. Follow the [RouterOS Container Guide](https://help.mikrotik.com/docs/display/ROS/Container) for detailed instructions.
 
+Simple [guide](https://github.com/akmalovaa/mikrotik-proxy-manager/blob/main/mikrotik_guide.md)
+
 > **Note**: This setup uses Let's Encrypt HTTP Challenge (port 80) by default
 
 ### Step 1: Prepare Directory Structure
