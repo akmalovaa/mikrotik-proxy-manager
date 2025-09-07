@@ -99,7 +99,7 @@ add key=MIKROTIK_PASSWORD name=mpm value=password
 #### Deploy Traefik
 
 ```routeros
-/container add remote-image=mirror.gcr.io/traefik:3.3.4 interface=veth1 workdir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
+/container add remote-image=mirror.gcr.io/traefik:3.3.4 interface=veth1 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
 ```
 
 #### Cloudflare DNS Challenge (Optional)
@@ -117,7 +117,7 @@ If you want to use Cloudflare DNS challenge instead of HTTP challenge:
 add key=CF_DNS_API_TOKEN name=traefik value=your-cloudflare-api-token
 
 # Deploy Traefik with environment variables
-/container add remote-image=mirror.gcr.io/traefik:v3.5.1 envlist=traefik interface=veth1 workdir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
+/container add remote-image=mirror.gcr.io/traefik:v3.5.1 envlist=traefik interface=veth1 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
 ```
 
 </details>
@@ -125,7 +125,7 @@ add key=CF_DNS_API_TOKEN name=traefik value=your-cloudflare-api-token
 #### Deploy MikroTik Proxy Manager
 
 ```routeros
-/container add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest envlist=mpm interface=veth1 workdir=usb1/docker/mpm mounts=mpm_config logging=yes start-on-boot=yes
+/container add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest envlist=mpm interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_config logging=yes start-on-boot=yes
 ```
 
 ### Step 6: Start Containers
@@ -221,13 +221,13 @@ Example commands for testing containers in RouterOS:
 
 ```routeros
 # Deploy whoami test service
-/container add remote-image=ghcr.io/traefik/whoami:latest interface=veth2 workdir=/docker/whoami logging=yes
+/container add remote-image=ghcr.io/traefik/whoami:latest interface=veth2 root-dir=/docker/whoami logging=yes
 
 # Deploy NGINX for testing
-/container add remote-image=mirror.gcr.io/nginx:latest interface=veth1 workdir=usb1/docker/nginx logging=yes
+/container add remote-image=mirror.gcr.io/nginx:latest interface=veth1 root-dir=usb1/docker/nginx logging=yes
 
 # Python container for debugging
-/container add remote-image=mirror.gcr.io/python:3.13.7-slim interface=veth1 workdir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
+/container add remote-image=mirror.gcr.io/python:3.13.7-slim interface=veth1 root-dir=usb1/docker/python logging=yes cmd="tail -f /dev/null"
 ```
 
 ## 🔒 Security
