@@ -17,4 +17,7 @@ pytest.xml
 temp
 logs.1.txt
 configs/*.yaml
+acme.json
+configs/example.yml
+
 

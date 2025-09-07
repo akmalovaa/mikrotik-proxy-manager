@@ -5,11 +5,9 @@ services:
       dockerfile: Dockerfile
     container_name: mikrotik-proxy-manager
     restart: unless-stopped
-    # command: ["python", "-m", "mikrotik_proxy_manager"]
-    command: ["tail", "-f", "/dev/null"]
-    environment:
-      LOG_LEVEL: "DEBUG"
-      TRAEFIK_CONFIGS_PATH: "./configs"
+    command: ["python", "-m", "mikrotik_proxy_manager"]
+    # command: ["tail", "-f", "/dev/null"]
+    env_file: .env
     volumes:
       - .:/srv
 

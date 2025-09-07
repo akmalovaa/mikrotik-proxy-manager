@@ -1,27 +1,32 @@
 services:
   mikrotik-proxy-manager:
-    image: ghcr.io/akmalovaa/mikrotik-proxy-manager:latest
+    # image: ghcr.io/akmalovaa/mikrotik-proxy-manager:latest
+    build:
+      dockerfile: Dockerfile
     container_name: mikrotik-proxy-manager
     restart: unless-stopped
     command: ["python", "-m", "mikrotik_proxy_manager"]
-    environment:
-      MIKROTIK_HOST: ${MIKROTIK_HOST:-'192.168.88.1'}
-      MIKROTIK_USER: ${MIKROTIK_USER:-'user-api'}
-      MIKROTIK_PASSWORD: ${MIKROTIK_PASSWORD:-'password'}
-      LOG_LEVEL: "INFO"
-      TRAEFIK_CONFIGS_PATH: "./configs"
+    env_file: .env
+    # environment:
+    #   MIKROTIK_HOST: ${MIKROTIK_HOST:-'192.168.88.1'}
+    #   MIKROTIK_USER: ${MIKROTIK_USER:-'user-api'}
+    #   MIKROTIK_PASSWORD: ${MIKROTIK_PASSWORD:-'password'}
+    #   LOG_LEVEL: "INFO"
+    #   TRAEFIK_CONFIGS_PATH: "./configs"
     volumes:
       - ./configs:/srv/configs
 
   traefik:
-    image: traefik:3.3.4
+    image: traefik:v3.5.1
     container_name: traefik
     restart: unless-stopped
+    # environment:
+    #   CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN} # Uncomment this line if you use Cloudflare DNS challenge
     ports:
       - "443:443"
       - "80:80"
       - "8080:8080"
     volumes:
       - "./traefik/traefik.yml:/etc/traefik/traefik.yml:ro"
-      - "./traefik/config:/etc/traefik/dynamic"
       - "./traefik/acme.json:/acme.json"
+      - "./configs:/configs"
