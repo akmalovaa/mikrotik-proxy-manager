@@ -58,8 +58,10 @@ Simple [guide](https://github.com/akmalovaa/mikrotik-proxy-manager/blob/main/mik
 
 Create necessary directories on your RouterOS device:
 
+If using USB storage, check format must be `EXT4`
+
 ```routeros
-/file add name=usb1 type=directory
+# /file add name=usb1 type=directory
 /file add name=usb1/configs type=directory
 /file add name=usb1/traefik type=directory
 ```
