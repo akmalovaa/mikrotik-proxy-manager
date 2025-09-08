@@ -43,6 +43,7 @@ The system consists of two containers running in [RouterOS Container](https://he
 - **Domain name**
 - **Public IP address** (optional, required for Let's Encrypt)
 - **USB storage** or internal memory for configuration storage (Recommended for real mikrotik devices)
+- **Skills**: Linux, Networking, MikroTik RouterOS, Debugging (If you've set it up and launched, congratulations, you're great. It's much easier to do this on Linux than on RouterOS)
 
 ## 🚀 Installation & Setup
 
@@ -58,12 +59,15 @@ Simple [guide](https://github.com/akmalovaa/mikrotik-proxy-manager/blob/main/mik
 
 Create necessary directories on your RouterOS device:
 
-If using USB storage, check format must be `EXT4`
+> If you user USB storage, check format must be `EXT4`
 
 ```routeros
 # /file add name=usb1 type=directory
 /file add name=usb1/configs type=directory
 /file add name=usb1/traefik type=directory
+# Prepare container dir
+/file add usb1/docker/traefik type=directory
+/file add usb1/docker/mpm type=directory
 ```
 
 ### Step 2: Download Traefik Configuration
@@ -74,6 +78,9 @@ Fetch the static Traefik default configuration:
 /tool fetch url="https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/traefik/traefik.yml" mode=https dst-path="usb1/traefik/traefik.yml"
 ```
 
+create acme.json path `usb1/traefik/acme.json`
+
+```routeros
 ### Step 3: Configure Container Mounts
 
 Set up mount points for containers:
@@ -83,6 +90,7 @@ Set up mount points for containers:
 add name=traefik_static src=/usb1/traefik dst=/etc/traefik
 add name=traefik_dynamic src=/usb1/configs dst=/configs  
 add name=mpm_config src=/usb1/configs dst=/srv/configs
+add name=traefik_acme src=/usb1/traefik/acme.json dst=/acme.json 
 ```
 
 ### Step 4: Configure Environment Variables
@@ -94,6 +102,8 @@ Set up API credentials for MikroTik connection:
 add key=MIKROTIK_HOST name=mpm value=192.168.88.1
 add key=MIKROTIK_USER name=mpm value=user-api
 add key=MIKROTIK_PASSWORD name=mpm value=password
+add key=REVERSE_PROXY_IP name=mpm value=10.0.0.1 # change to your Traefik container IP address `veth1`
+# add key=TLS_CERT_RESOLVER name=mpm value=cloudflare # If you want to use Cloudflare DNS challenge
 ```
 
 ### Step 5: Deploy Containers
@@ -101,7 +111,7 @@ add key=MIKROTIK_PASSWORD name=mpm value=password
 #### Deploy Traefik
 
 ```routeros
-/container add remote-image=mirror.gcr.io/traefik:3.3.4 interface=veth1 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
+/container add remote-image=mirror.gcr.io/traefik:v3.5.1 interface=veth1 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
 ```
 
 #### Cloudflare DNS Challenge (Optional)
@@ -117,9 +127,13 @@ If you want to use Cloudflare DNS challenge instead of HTTP challenge:
 ```routeros
 /container envs
 add key=CF_DNS_API_TOKEN name=traefik value=your-cloudflare-api-token
+add key=TLS_CERT_RESOLVER name=mpm value=cloudflare
+```
 
 # Deploy Traefik with environment variables
-/container add remote-image=mirror.gcr.io/traefik:v3.5.1 envlist=traefik interface=veth1 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
+
+/container add remote-image=mirror.gcr.io/traefik:v3.5.1 envlist=traefik interface=veth2 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
+
 ```
 
 </details>
@@ -128,6 +142,8 @@ add key=CF_DNS_API_TOKEN name=traefik value=your-cloudflare-api-token
 
 ```routeros
 /container add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest envlist=mpm interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_config logging=yes start-on-boot=yes
+# Process exited with status 1
+/container add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:2.1.0 envlist=mpm interface=veth1 logging=yes mounts=mpm_config root-dir=/usb1/docker/mpm start-on-boot=yes
 ```
 
 ### Step 6: Start Containers
@@ -273,3 +289,41 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📞 Support
 
 If you encounter any issues or have questions, please [open an issue](https://github.com/akmalovaa/mikrotik-proxy-manager/issues) on GitHub.
+
+## Known Issues
+
+### ACME permissions- Traefik logs
+
+```log
+traefik:: {"level":"error","error":"unable to get ACME account: permissions 644 for acme.json are too open, please use 600","resolver":"cloudflare","time":"2025-09-08T20:02:11Z","message":"The ACME resolve is skipped from the resolvers list"}
+```
+
+```routeros
+container/shell number=X
+chmod 600 acme.json
+```
+
+restart container
+
+### Container network problems
+
+Run container with `cmd="tail -f /dev/null"` and check network inside container
+
+```routeros
+container/shell number=X
+ip addr show or cat /proc/net/route
+```
+
+Check work network and change your RouterOS settings `bridge` or `veth` or `ip address`
+
+### USB storage problems
+
+If you use USB storage and have problems with reading/writing files, check your USB storage format. Recommended format `EXT4`
+
+Error `no space to extract layer`: Check eject USB and reinsert
+
+### No container logs
+
+Disable and enable logging for container
+
+And disable container config used `RAM High`
