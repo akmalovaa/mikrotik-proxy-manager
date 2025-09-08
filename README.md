@@ -132,8 +132,8 @@ add key=TLS_CERT_RESOLVER name=mpm value=cloudflare
 
 # Deploy Traefik with environment variables
 
+```
 /container add remote-image=mirror.gcr.io/traefik:v3.5.1 envlist=traefik interface=veth2 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
-
 ```
 
 </details>
