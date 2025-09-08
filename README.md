@@ -316,6 +316,18 @@ ip addr show or cat /proc/net/route
 
 Check work network and change your RouterOS settings `bridge` or `veth` or `ip address`
 
+An example from the official documentation:
+
+> Create a new veth interface and assign an IP address in a range that is unique in your network:
+
+```routeros
+/interface/veth/add name=veth1 address=172.17.0.2/24 gateway=172.17.0.1
+```
+
+> **⚠️ WARNING**
+>
+> Do not use IP addresses from the network `172.17.0.2/24` for containers to avoid conflicts in `docker compose` on a remote server due to problems with the reverse route.
+
 ### USB storage problems
 
 If you use USB storage and have problems with reading/writing files, check your USB storage format. Recommended format `EXT4`
