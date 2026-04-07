@@ -11,7 +11,9 @@ class Settings(pydantic_settings.BaseSettings):
     mikrotik_dns_manager: bool = True
     reverse_proxy_ip: str | None = None
     traefik_configs_path: str = "./configs"
-    tls_cert_resolver: str = "letsEncrypt"  # cloudflare | selfSigned | letsEncrypt
+    tls_cert_resolver: str = (
+        ""  # cloudflare | selfSigned | letsEncrypt; empty = inherit from entryPoint
+    )
 
 
 settings: Settings = Settings()

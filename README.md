@@ -73,12 +73,29 @@ All settings are environment variables (loaded via `pydantic-settings`, see `.en
 | `MIKROTIK_DNS_MANAGER` | `true` | Manage `/ip/dns/static` entries for proxy hosts |
 | `REVERSE_PROXY_IP` | — | Traefik container IP — used as DNS A target; falls back to `MIKROTIK_HOST` |
 | `TRAEFIK_CONFIGS_PATH` | `./configs` | Where MPM writes dynamic YAML files (mounted to `/srv/configs` in the container) |
-| `TLS_CERT_RESOLVER` | `letsEncrypt` | Must match a resolver defined in your `traefik/traefik*.yml` |
+| `TLS_CERT_RESOLVER` | *(empty)* | Per-router cert resolver. Leave empty to inherit from the entryPoint-level `http.tls` (recommended for wildcard setups). If set, must match a resolver defined in `traefik/traefik*.yml`. |
 | `SYNC_INTERVAL_SECONDS` | `10` | Poll interval |
 | `LOG_LEVEL` | `INFO` | Log level |
 | `LOG_JSON` | `true` | Emit structured JSON logs |
 
-> **Important**: `TLS_CERT_RESOLVER` must match a resolver actually defined in the Traefik static config. The bundled `traefik/traefik.yml` defines `letsEncrypt`; `traefik/traefik_cloudflare.yml` defines `cloudflare`. Mismatches surface as `Router uses a nonexistent certificate resolver` in Traefik logs.
+> **Important**: If `TLS_CERT_RESOLVER` is set, it must match a resolver actually defined in the Traefik static config. The bundled `traefik/traefik.yml` defines `letsEncrypt`; `traefik/traefik_cloudflare.yml` defines `cloudflare`. Mismatches surface as `Router uses a nonexistent certificate resolver` in Traefik logs.
+>
+> **Wildcard tip**: for a single `*.example.com` cert covering every generated subdomain, leave `TLS_CERT_RESOLVER` empty and declare the resolver + wildcard on the entryPoint in your static `traefik.yml`:
+>
+> ```yaml
+> entryPoints:
+>   websecure:
+>     address: :443
+>     http:
+>       tls:
+>         certResolver: cloudflare
+>         domains:
+>           - main: example.com
+>             sans:
+>               - "*.example.com"
+> ```
+>
+> Generated routers will emit `tls: {}` and inherit this wildcard automatically — no per-host ACME requests.
 
 ## 🚀 Installation & Setup
 
@@ -97,12 +114,12 @@ Create necessary directories on your RouterOS device:
 > If you user USB storage, check format must be `EXT4`
 
 ```routeros
-# /file add name=usb1 type=directory
-/file add name=usb1/configs type=directory
-/file add name=usb1/traefik type=directory
+# Prepare config dir
+/file/add type=directory name=usb1/configs
+/file/add type=directory name=usb1/traefik
 # Prepare container dir
-/file add usb1/docker/traefik type=directory
-/file add usb1/docker/mpm type=directory
+/file/add type=directory name=usb1/docker/traefik
+/file/add type=directory name=usb1/docker/mpm
 ```
 
 ### Step 2: Download Traefik Configuration
@@ -146,12 +163,6 @@ add key=REVERSE_PROXY_IP name=mpm value=10.0.0.1 # change to your Traefik contai
 
 ### Step 5: Deploy Containers
 
-#### Deploy Traefik
-
-```routeros
-/container add remote-image=mirror.gcr.io/traefik:v3.5.1 interface=veth1 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
-```
-
 #### Cloudflare DNS Challenge (Optional)
 
 If you want to use Cloudflare DNS challenge instead of HTTP challenge:
@@ -170,8 +181,8 @@ add key=TLS_CERT_RESOLVER name=mpm value=cloudflare
 
 # Deploy Traefik with environment variables
 
-```
-/container add remote-image=mirror.gcr.io/traefik:v3.5.1 envlist=traefik interface=veth2 root-dir=usb1/docker/traefik mounts=traefik_static,traefik_dynamic start-on-boot=yes logging=yes
+```routeros
+/container add envlists=traefik interface=veth1 layer-dir="" logging=yes mountlists=traefik_static,traefik_dynamic name=traefik remote-image=mirror.gcr.io/traefik:v3.6.12 root-dir=/usb1/docker/traefik start-on-boot=yes workdir=/
 ```
 
 </details>
@@ -179,7 +190,7 @@ add key=TLS_CERT_RESOLVER name=mpm value=cloudflare
 #### Deploy MikroTik Proxy Manager
 
 ```routeros
-/container add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest envlist=mpm interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_config logging=yes start-on-boot=yes
+/container add envlists=mpm interface=veth1 layer-dir="" logging=yes mountlists=mpm_config name=mpm remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest root-dir=usb1/docker/mpm start-on-boot=yes workdir=/
 ```
 
 > Pin to a specific tag (e.g. `:2.1.0`) for reproducible deploys instead of `:latest`.
@@ -346,6 +357,7 @@ traefik:: {"level":"error","error":"unable to get ACME account: permissions 644 
 ```
 
 ```routeros
+container/print
 container/shell number=X
 chmod 600 acme.json
 ```
@@ -357,6 +369,7 @@ restart container
 Run container with `cmd="tail -f /dev/null"` and check network inside container
 
 ```routeros
+container/print
 container/shell number=X
 ip addr show or cat /proc/net/route
 ```
@@ -370,8 +383,3 @@ An example from the official documentation:
 ```routeros
 /interface/veth/add name=veth1 address=172.17.0.2/24 gateway=172.17.0.1
 ```
-
-> **⚠️ WARNING**
->
-> Do not use IP addresses from the network `172.17.0.0/24` for containers to avoid conflicts in `docker compose` on a remote server due to problems with the reverse route.
-

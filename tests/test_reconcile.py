@@ -11,7 +11,7 @@ from mikrotik_proxy_manager import traefik_writer
 from mikrotik_proxy_manager.dns import DnsManager
 from mikrotik_proxy_manager.models import MikrotikProxyRule
 from mikrotik_proxy_manager.sync import reconcile
-from mikrotik_proxy_manager.traefik_writer import remove_config
+from mikrotik_proxy_manager.traefik_writer import remove_config, render_config
 from tests.conftest import FakeMikroTik
 
 TLS = "letsEncrypt"
@@ -136,3 +136,17 @@ def test_remove_config_returns_true_when_file_absent(configs_dir: Path) -> None:
 def test_remove_config_returns_false_for_empty_id(configs_dir: Path) -> None:
     assert remove_config(None, str(configs_dir)) is False
     assert remove_config("", str(configs_dir)) is False
+
+
+def test_render_config_emits_cert_resolver_when_set() -> None:
+    cfg = render_config(_rule(), tls_cert_resolver="cloudflare")
+    router = cfg["http"]["routers"]["app_foo_com_router"]
+    assert router["tls"] == {"certResolver": "cloudflare"}
+
+
+def test_render_config_emits_empty_tls_when_resolver_unset() -> None:
+    """Empty resolver ⇒ ``tls: {}`` so the router inherits the entryPoint-level
+    cert resolver + wildcard ``domains`` block (no per-host ACME requests)."""
+    cfg = render_config(_rule(), tls_cert_resolver="")
+    router = cfg["http"]["routers"]["app_foo_com_router"]
+    assert router["tls"] == {}

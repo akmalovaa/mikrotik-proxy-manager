@@ -12,10 +12,16 @@ from mikrotik_proxy_manager.models import MikrotikProxyRule
 
 
 def render_config(rule: MikrotikProxyRule, tls_cert_resolver: str) -> dict[str, Any]:
-    """Build the Traefik dynamic-config dict for a single rule. Pure: no IO."""
+    """Build the Traefik dynamic-config dict for a single rule. Pure: no IO.
+
+    If ``tls_cert_resolver`` is empty, the router emits ``tls: {}`` so it
+    inherits the resolver (and any wildcard ``domains`` block) from the
+    entryPoint-level ``http.tls`` config. This lets a single wildcard cert
+    serve every generated subdomain without per-host ACME requests."""
     slug = rule.slug
     if slug is None:
         raise ValueError(f"Rule {rule.id} has no usable slug; check is_routable() first")
+    tls_block: dict[str, Any] = {"certResolver": tls_cert_resolver} if tls_cert_resolver else {}
     return {
         "http": {
             "routers": {
@@ -23,7 +29,7 @@ def render_config(rule: MikrotikProxyRule, tls_cert_resolver: str) -> dict[str, 
                     "entryPoints": ["websecure"],
                     "rule": f"Host(`{rule.dst_host}`)",
                     "service": f"{slug}_service",
-                    "tls": {"certResolver": tls_cert_resolver},
+                    "tls": tls_block,
                 }
             },
             "services": {

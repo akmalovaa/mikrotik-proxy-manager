@@ -1,0 +1,9 @@
+http:
+  middlewares:
+    local:
+      ipAllowList:
+        sourceRange:
+          - "127.0.0.1/32"
+          - "192.168.88.0/24"
+          - "192.168.10.0/24"
+          - "10.127.0.0/24"
