@@ -3,6 +3,7 @@ import pydantic_settings
 
 class Settings(pydantic_settings.BaseSettings):
     log_level: str = "INFO"
+    log_json: bool = True
     mikrotik_host: str = "192.168.88.1"
     mikrotik_user: str = "user"
     mikrotik_password: str = "password"

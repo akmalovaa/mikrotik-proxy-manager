@@ -11,6 +11,8 @@
 - [Architecture](#architecture)
 - [Features](#features)
 - [Requirements](#requirements)
+- [Quick Start (local)](#quick-start-local)
+- [Configuration](#configuration)
 - [Installation & Setup](#installation--setup)
 - [Usage](#usage)
 - [Development](#development)
@@ -45,6 +47,39 @@ The system consists of two containers running in [RouterOS Container](https://he
 - **USB storage** or internal memory for configuration storage (Recommended for real mikrotik devices)
 - **Skills**: Linux, Networking, MikroTik RouterOS, Debugging (If you've set it up and launched, congratulations, you're great. It's much easier to do this on Linux than on RouterOS)
 
+## ⚡ Quick Start (local)
+
+Want to try it without touching your router? Run the whole stack locally with Docker Compose against an existing MikroTik:
+
+```bash
+cp .env.example .env
+# edit .env: MIKROTIK_HOST, MIKROTIK_USER, MIKROTIK_PASSWORD, REVERSE_PROXY_IP
+docker compose up --build
+```
+
+This launches Traefik + `mikrotik-proxy-manager` side by side. MPM will poll `/ip/proxy/access` and write Traefik dynamic configs into `./configs`, which Traefik watches live.
+
+## ⚙️ Configuration
+
+All settings are environment variables (loaded via `pydantic-settings`, see `.env.example`).
+
+| Variable | Default | Description |
+|---|---|---|
+| `MIKROTIK_HOST` | — | RouterOS IP / hostname |
+| `MIKROTIK_USER` | — | API user |
+| `MIKROTIK_PASSWORD` | — | API password |
+| `MIKROTIK_PORT` | `8728` | RouterOS API port (`8729` for TLS) |
+| `MIKROTIK_USE_SSL` | `false` | Use API-SSL |
+| `MIKROTIK_DNS_MANAGER` | `true` | Manage `/ip/dns/static` entries for proxy hosts |
+| `REVERSE_PROXY_IP` | — | Traefik container IP — used as DNS A target; falls back to `MIKROTIK_HOST` |
+| `TRAEFIK_CONFIGS_PATH` | `./configs` | Where MPM writes dynamic YAML files (mounted to `/srv/configs` in the container) |
+| `TLS_CERT_RESOLVER` | `letsEncrypt` | Must match a resolver defined in your `traefik/traefik*.yml` |
+| `SYNC_INTERVAL_SECONDS` | `10` | Poll interval |
+| `LOG_LEVEL` | `INFO` | Log level |
+| `LOG_JSON` | `true` | Emit structured JSON logs |
+
+> **Important**: `TLS_CERT_RESOLVER` must match a resolver actually defined in the Traefik static config. The bundled `traefik/traefik.yml` defines `letsEncrypt`; `traefik/traefik_cloudflare.yml` defines `cloudflare`. Mismatches surface as `Router uses a nonexistent certificate resolver` in Traefik logs.
+
 ## 🚀 Installation & Setup
 
 ### Prerequisites
@@ -74,13 +109,16 @@ Create necessary directories on your RouterOS device:
 
 Fetch the static Traefik default configuration:
 
-```routeros
-/tool fetch url="https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/traefik/traefik.yml" mode=https dst-path="usb1/traefik/traefik.yml"
-```
+- https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/traefik/traefik.yml
 
-create acme.json path `usb1/traefik/acme.json`
+or the Cloudflare DNS-challenge example:
 
-```routeros
+- https://raw.githubusercontent.com/akmalovaa/mikrotik-proxy-manager/refs/heads/main/traefik/traefik_cloudflare.yml
+
+Edit the settings (**set a real ACME email — Let's Encrypt rejects `example.com` addresses**) and upload it to MikroTik Files as `usb1/traefik/traefik.yml`.
+
+Create the ACME storage file at `usb1/traefik/acme.json` (must be `chmod 600` — see [Known Issues](#known-issues)).
+
 ### Step 3: Configure Container Mounts
 
 Set up mount points for containers:
@@ -142,9 +180,9 @@ add key=TLS_CERT_RESOLVER name=mpm value=cloudflare
 
 ```routeros
 /container add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest envlist=mpm interface=veth1 root-dir=usb1/docker/mpm mounts=mpm_config logging=yes start-on-boot=yes
-# Process exited with status 1
-/container add remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:2.1.0 envlist=mpm interface=veth1 logging=yes mounts=mpm_config root-dir=/usb1/docker/mpm start-on-boot=yes
 ```
+
+> Pin to a specific tag (e.g. `:2.1.0`) for reproducible deploys instead of `:latest`.
 
 ### Step 6: Start Containers
 
@@ -212,25 +250,34 @@ After adding proxy entries, you can verify the generated configurations:
 
 ## 🛠️ Development
 
-### Local Python Development
+This project uses [`uv`](https://docs.astral.sh/uv/) for dependency management (Python ≥ 3.13). `pyproject.toml` + `uv.lock` are the source of truth — don't use `pip` / `venv` directly.
 
-Set up the development environment:
+### Local Python Development
 
 ```bash
 # Install dependencies
 uv sync
 
-# Run the application locally
+# Run the application locally (reads .env)
 uv run python -m mikrotik_proxy_manager
+
+# Lint + format
+uv run ruff check
+uv run ruff format
+
+# Tests
+uv run pytest
+uv run pytest tests/test_sync.py::test_dst_host_change_removes_old_dns
 ```
 
 ### Docker Development
 
-For development with Docker containers:
-
 ```bash
-# Build and run development containers
-docker-compose -f dev_compose.yaml up --build
+# Full local stack (mpm + traefik)
+docker compose up --build
+
+# Dev compose variant
+docker compose -f dev_compose.yaml up --build
 ```
 
 ### Testing with RouterOS Containers
@@ -328,14 +375,3 @@ An example from the official documentation:
 >
 > Do not use IP addresses from the network `172.17.0.0/24` for containers to avoid conflicts in `docker compose` on a remote server due to problems with the reverse route.
 
-### USB storage problems
-
-If you use USB storage and have problems with reading/writing files, check your USB storage format. Recommended format `EXT4`
-
-Error `no space to extract layer`: Check eject USB and reinsert
-
-### No container logs
-
-Disable and enable logging for container
-
-And disable container config used `RAM High`

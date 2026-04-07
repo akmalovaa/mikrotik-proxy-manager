@@ -7,17 +7,11 @@ services:
     restart: unless-stopped
     command: ["python", "-m", "mikrotik_proxy_manager"]
     env_file: .env
-    # environment:
-    #   MIKROTIK_HOST: ${MIKROTIK_HOST:-'192.168.88.1'}
-    #   MIKROTIK_USER: ${MIKROTIK_USER:-'user-api'}
-    #   MIKROTIK_PASSWORD: ${MIKROTIK_PASSWORD:-'password'}
-    #   LOG_LEVEL: "INFO"
-    #   TRAEFIK_CONFIGS_PATH: "./configs"
     volumes:
       - ./configs:/srv/configs
 
   traefik:
-    image: traefik:v3.5.1
+    image: traefik:v3.6.12
     container_name: traefik
     restart: unless-stopped
     # environment:
