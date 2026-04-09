@@ -2,6 +2,16 @@
 
 > **Automated reverse proxy management through MikroTik interface**
 
+> [!IMPORTANT]
+> ### Choose the right tool for the job
+>
+> | If you need… | Use |
+> |---|---|
+> | A simple built-in reverse proxy | [MikroTik Reverse Proxy](https://help.mikrotik.com/docs/spaces/ROS/pages/377225232/Reverse+Proxy) (no extra software required) |
+> | Traefik as a reverse proxy | Run it on a separate host (VM or bare-metal) — much simpler |
+> | A management UI for proxying | [Nginx Proxy Manager](https://nginxproxymanager.com/) |
+> | You love Linux, containers, network, debugging, and suffering | **Welcome to MikroTik Proxy Manager** 🔥 |
+
 [![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)](https://github.com/akmalovaa/mikrotik-proxy-manager)
 [![License](https://img.shields.io/github/license/akmalovaa/mikrotik-proxy-manager?style=for-the-badge)](LICENSE)
 
@@ -142,10 +152,9 @@ Set up mount points for containers:
 
 ```routeros
 /container mounts
-add name=traefik_static src=/usb1/traefik dst=/etc/traefik
-add name=traefik_dynamic src=/usb1/configs dst=/configs  
-add name=mpm_config src=/usb1/configs dst=/srv/configs
-add name=traefik_acme src=/usb1/traefik/acme.json dst=/acme.json 
+add dst=/srv/configs list=mpm_config src=/usb1/configs
+add dst=/configs list=traefik_dynamic src=/usb1/configs
+add dst=/etc/traefik list=traefik_static src=/usb1/traefik
 ```
 
 ### Step 4: Configure Environment Variables
@@ -154,11 +163,12 @@ Set up API credentials for MikroTik connection:
 
 ```routeros
 /container envs
-add key=MIKROTIK_HOST name=mpm value=192.168.88.1
-add key=MIKROTIK_USER name=mpm value=user-api
-add key=MIKROTIK_PASSWORD name=mpm value=password
-add key=REVERSE_PROXY_IP name=mpm value=10.0.0.1 # change to your Traefik container IP address `veth1`
-# add key=TLS_CERT_RESOLVER name=mpm value=cloudflare # If you want to use Cloudflare DNS challenge
+add key=MIKROTIK_HOST list=mpm value=192.168.88.1
+add key=MIKROTIK_USER list=mpm value=user-api
+add key=MIKROTIK_PASSWORD list=mpm value=password
+# add key=REVERSE_PROXY_IP list=mpm value=10.0.0.1 # change Traefik container IP - defalut use MIKROTIK_HOST ip
+# add key=TLS_CERT_RESOLVER list=mpm value=cloudflare # If you want to use Cloudflare DNS challenge - defalut empty
+# add key=CF_DNS_API_TOKEN list=traefik value=YOUR_TOKEN
 ```
 
 ### Step 5: Deploy Containers

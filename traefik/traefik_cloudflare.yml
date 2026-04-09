@@ -17,8 +17,8 @@ entryPoints:
   web:
     address: :80
     forwardedHeaders:
-      trustedIPs: &trustedIps
-        # Start of Clouflare public IP list for HTTP requests, remove this if you don't use it; https://www.cloudflare.com/de-de/ips/
+      trustedIPs:
+        &trustedIps # Start of Clouflare public IP list for HTTP requests, remove this if you don't use it; https://www.cloudflare.com/de-de/ips/
         - 103.21.244.0/22
         - 103.22.200.0/22
         - 103.31.4.0/22
@@ -79,7 +79,7 @@ metrics:
     addEntryPointsLabels: true
     addServicesLabels: true
 
-ping: {}  # Healtcheck for traefik default port 8080
+ping: {} # Healtcheck for traefik default port 8080
 
 serversTransport:
   insecureSkipVerify: true
@@ -88,7 +88,7 @@ certificatesResolvers:
   cloudflare:
     acme:
       email: info@exmaple.com
-      storage: acme.json
+      storage: /etc/traefik/acme.json
       dnsChallenge:
         provider: cloudflare
         resolvers:
