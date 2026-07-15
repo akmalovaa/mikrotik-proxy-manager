@@ -200,7 +200,7 @@ add key=TLS_CERT_RESOLVER name=mpm value=cloudflare
 #### Deploy MikroTik Proxy Manager
 
 ```routeros
-/container add envlists=mpm interface=veth1 layer-dir="" logging=yes mountlists=mpm_config name=mpm remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest root-dir=usb1/docker/mpm start-on-boot=yes workdir=/
+/container add envlists=mpm interface=veth1 layer-dir="" logging=yes mountlists=mpm_config name=mpm remote-image=ghcr.io/akmalovaa/mikrotik-proxy-manager:latest root-dir=usb1/docker/mpm start-on-boot=yes workdir=/srv
 ```
 
 > Pin to a specific tag (e.g. `:2.1.0`) for reproducible deploys instead of `:latest`.

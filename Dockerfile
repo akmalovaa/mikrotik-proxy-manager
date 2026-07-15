@@ -7,7 +7,7 @@ FROM python:$PYTHON_VERSION-slim
 
 ENV PYTHONUNBUFFERED=1
 ENV UV_PROJECT_ENVIRONMENT="/usr/local/"
-# ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/srv"
 
 WORKDIR /srv
 
